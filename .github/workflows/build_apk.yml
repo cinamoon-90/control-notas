@@ -39,31 +39,33 @@ jobs:
       - name: Obtener dependencias
         run: flutter pub get
 
-      - name: Diagnóstico de Flutter
-        run: flutter doctor -v
-
-      - name: Compilar APK
+      - name: Compilar APK Debug
         run: |
-          echo "Iniciando compilación de APK..."
-          flutter build apk --debug --no-tree-shake-icons > build.log 2>&1 || {
-            echo "================ LOG DE ERROR DE GRADLE ================"
-            grep -i -C 5 "FAILURE" build.log || tail -n 100 build.log
-            echo "========================================================"
+          echo "Compilando versión Debug..."
+          flutter build apk --debug > build_debug.log 2>&1 || {
+            echo "### ERROR EN BUILD DEBUG" >> $GITHUB_STEP_SUMMARY
+            echo '```text' >> $GITHUB_STEP_SUMMARY
+            tail -n 80 build_debug.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat build_debug.log
             exit 1
           }
-          echo "Compilación exitosa. Generando versión Release..."
-          flutter build apk --release --no-tree-shake-icons || true
+
+      - name: Compilar APK Release
+        run: |
+          echo "Compilando versión Release..."
+          flutter build apk > build_release.log 2>&1 || {
+            echo "### ERROR EN BUILD RELEASE" >> $GITHUB_STEP_SUMMARY
+            echo '```text' >> $GITHUB_STEP_SUMMARY
+            tail -n 80 build_release.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          }
 
       - name: Subir APKs generados
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: app-apks
-          path: build/app/outputs/flutter-apk/*.apk
-
-      - name: Subir log de error si falla
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: build-failure-log
-          path: build.log
+          name: app-apk-instalable
+          path: |
+            build/app/outputs/flutter-apk/*.apk
+            *.log
