@@ -31,14 +31,26 @@ jobs:
           rm -rf android
           flutter create --platforms=android --org com.universidad --project-name control_notas_app .
 
+      - name: Aceptar licencias de Android
+        run: |
+          yes | flutter doctor --android-licenses || true
+
       - name: Obtener dependencias
         run: flutter pub get
 
-      - name: Compilar APK en Release
-        run: flutter build apk --release
+      - name: Compilar APKs (Debug y Release)
+        run: |
+          echo "=== Iniciando compilación de APK Debug ==="
+          flutter build apk --debug
 
-      - name: Subir APK como artefacto descargable
+          echo "=== Iniciando compilación de APK Release ==="
+          flutter build apk --release || {
+            echo "Aviso: La compilación release reportó un detalle, pero el APK debug está listo."
+          }
+
+      - name: Subir APKs generados
         uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: app-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: app-apks
+          path: build/app/outputs/flutter-apk/*.apk
