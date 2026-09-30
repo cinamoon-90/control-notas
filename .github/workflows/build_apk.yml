@@ -30,6 +30,7 @@ jobs:
         run: |
           rm -rf android
           flutter create --platforms=android --org com.universidad --project-name control_notas_app .
+          chmod +x android/gradlew
 
       - name: Aceptar licencias de Android
         run: |
@@ -38,15 +39,20 @@ jobs:
       - name: Obtener dependencias
         run: flutter pub get
 
-      - name: Compilar APKs (Debug y Release)
-        run: |
-          echo "=== Iniciando compilación de APK Debug ==="
-          flutter build apk --debug
+      - name: Diagnóstico de Flutter
+        run: flutter doctor -v
 
-          echo "=== Iniciando compilación de APK Release ==="
-          flutter build apk --release || {
-            echo "Aviso: La compilación release reportó un detalle, pero el APK debug está listo."
+      - name: Compilar APK
+        run: |
+          echo "Iniciando compilación de APK..."
+          flutter build apk --debug --no-tree-shake-icons > build.log 2>&1 || {
+            echo "================ LOG DE ERROR DE GRADLE ================"
+            grep -i -C 5 "FAILURE" build.log || tail -n 100 build.log
+            echo "========================================================"
+            exit 1
           }
+          echo "Compilación exitosa. Generando versión Release..."
+          flutter build apk --release --no-tree-shake-icons || true
 
       - name: Subir APKs generados
         uses: actions/upload-artifact@v4
@@ -54,3 +60,10 @@ jobs:
         with:
           name: app-apks
           path: build/app/outputs/flutter-apk/*.apk
+
+      - name: Subir log de error si falla
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: build-failure-log
+          path: build.log
