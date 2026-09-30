@@ -1,4 +1,6 @@
 @echo off
+setlocal
+set "PATH=C:\Users\UIET01\AppData\Local\Programs\MinGit\cmd;%PATH%"
 cls
 echo =======================================================
 echo   Subiendo Control de Notas a GitHub
@@ -20,8 +22,8 @@ if %ERRORLEVEL% EQU 0 (
     echo https://github.com/cinamoon-90/control-notas/actions
 ) else (
     echo.
-    echo [AVISO] Ocurrio un problema al subir a GitHub.
-    echo Asegurate de iniciar sesion si se abre tu navegador.
+    echo [AVISO] Si es la primera vez, el navegador te solicitara
+    echo autorizar el acceso a tu cuenta de GitHub (Sign in with browser).
 )
 
 echo.
